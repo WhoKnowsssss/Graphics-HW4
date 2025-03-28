@@ -31,8 +31,62 @@ Cloth::~Cloth() {
 }
 
 void Cloth::buildGrid() {
-  // TODO (Part 1): Build a grid of masses and springs.
+  for (int y = 0; y < num_height_points; y++) {
+    for (int x = 0; x < num_width_points; x++) {
+      double px = (double)x / (num_width_points - 1) * width;
+      double py = (double)y / (num_height_points - 1) * height;
+      Vector3D position;
 
+      if (orientation == HORIZONTAL) {
+        position = Vector3D(px, 1.0, py);
+      } else { // VERTICAL
+        double random_offset = ((double)rand() / RAND_MAX) * 0.002 - 0.001;
+        position = Vector3D(px, py, random_offset);
+      }
+
+      bool is_pinned = false;
+      for (const auto &p : pinned) {
+        // std::cout << "Checking pinned position: " << p[0] << ", " << p[1] << std::endl;
+        if (p[0] == x && p[1] == y) {
+          is_pinned = true;
+          break;
+        }
+      }
+
+      point_masses.emplace_back(position, is_pinned);
+    }
+  }
+
+  // create springs
+  for (int y = 0; y < num_height_points; y++) {
+    for (int x = 0; x < num_width_points; x++) {
+      int idx = y * num_width_points + x;
+
+      // Structural (horizontal and vertical)
+      if (x > 0) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - 1], STRUCTURAL);
+      }
+      if (y > 0) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - num_width_points], STRUCTURAL);
+      }
+
+      // Shearing (diagonal springs)
+      if (x > 0 && y > 0) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - num_width_points - 1], SHEARING);
+      }
+      if (x < num_width_points - 1 && y > 0) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - num_width_points + 1], SHEARING);
+      }
+
+      // Bending (horizontal and vertical) * 2
+      if (x > 1) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - 2], BENDING);
+      }
+      if (y > 1) {
+        springs.emplace_back(&point_masses[idx], &point_masses[idx - 2 * num_width_points], BENDING);
+      }
+    }
+  }
 }
 
 void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParameters *cp,
