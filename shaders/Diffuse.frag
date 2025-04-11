@@ -25,9 +25,17 @@ in vec4 v_normal;
 out vec4 out_color;
 
 void main() {
-  // YOUR CODE HERE
-  
-  // (Placeholder code. You will want to replace it.)
-  out_color = (vec4(1, 1, 1, 0) + v_normal) / 2;
-  out_color.a = 1;
+  vec3 position = v_position.xyz;
+  vec3 normal = normalize(v_normal.xyz);
+
+  vec3 light_dir = u_light_pos - position;
+  float distance = length(light_dir);
+  light_dir = normalize(light_dir);
+  float dot_nl = max(0.0, dot(normal, light_dir));
+
+  vec3 diffuse_coefficient = vec3(1.0, 1.0, 1.0);
+  vec3 diffuse = diffuse_coefficient * (u_light_intensity / (distance * distance)) * dot_nl;
+
+  out_color.rgb = diffuse;
+  out_color.a = 1.0;
 }
