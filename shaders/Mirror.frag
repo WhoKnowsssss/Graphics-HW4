@@ -13,6 +13,10 @@ out vec4 out_color;
 
 void main() {
   // YOUR CODE HERE
-  out_color = (vec4(1, 1, 1, 0) + v_normal) / 2;
-  out_color.a = 1;
+
+  vec3 view_dir = normalize(u_cam_pos - v_position.xyz);
+  vec3 reflect_dir = reflect(view_dir, v_normal.xyz);
+  vec3 reflect_color = texture(u_texture_cubemap, reflect_dir).rgb;
+  out_color.rgb = reflect_color;
+  out_color.a = 1.0;
 }
